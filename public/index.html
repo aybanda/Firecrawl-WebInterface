@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firecrawl Demo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      #results {
+        height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Firecrawl Demo</h1>
+    <form id="crawlForm">
+      <input
+        type="url"
+        id="urlInput"
+        placeholder="Enter URL to crawl"
+        required
+      />
+      <input
+        type="number"
+        id="maxDepthInput"
+        placeholder="Max Depth (default: 2)"
+        min="1"
+      />
+      <input
+        type="number"
+        id="maxPagesInput"
+        placeholder="Max Pages (default: 10)"
+        min="1"
+      />
+      <button type="submit">Start Crawl</button>
+    </form>
+    <div id="results"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const form = document.getElementById("crawlForm");
+      const results = document.getElementById("results");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        results.innerHTML = "";
+        socket.emit("startCrawl", {
+          url: document.getElementById("urlInput").value,
+          maxDepth:
+            parseInt(document.getElementById("maxDepthInput").value) || 2,
+          maxPages:
+            parseInt(document.getElementById("maxPagesInput").value) || 10,
+        });
+      });
+
+      socket.on("crawlData", (data) => {
+        results.innerHTML += `<p>Crawled: ${data.url}</p>`;
+        results.scrollTop = results.scrollHeight;
+      });
+
+      socket.on("crawlError", (error) => {
+        results.innerHTML += `<p style="color: red;">Error: ${error}</p>`;
+        results.scrollTop = results.scrollHeight;
+      });
+
+      socket.on("crawlDone", () => {
+        results.innerHTML += "<p><strong>Crawl completed</strong></p>";
+        results.scrollTop = results.scrollHeight;
+      });
+    </script>
+  </body>
+</html>
